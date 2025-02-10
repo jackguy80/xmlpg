@@ -6,17 +6,10 @@ For info about the language see [XMLPG.md](XMLPG.md).
 
 # Relation to Open DIS
 
-Xmlpg was used to auto-generate the initial source code for the PDU's of the following Open DIS projects:
-- [open-dis-java](https://github.com/open-dis/open-dis-java)
-- [open-dis-cpp](https://github.com/open-dis/open-dis-cpp)
-- [open-dis-javascript](https://github.com/open-dis/open-dis-javascript)
-- [open-dis-python](https://github.com/open-dis/open-dis-python)
-- [open-dis-csharp](https://github.com/open-dis/open-dis-csharp)
-- [open-dis-objectivec](https://github.com/open-dis/open-dis-objectivec)
+Xmlpg was used to auto-generate the initial source code for the PDU's of the following projects:
+- [open-dis-cpp](https://github.com/jackguy80/open-dis-cpp)
 
-The original XML specification file for Open DIS is [DIS2012.xml](DIS2012.xml).
-This specification file is currently not maintained.
-Any corrections to the generated Open DIS source code are now being made directly to the downstream projects referenced above.
+The specification files are located [here](https://github.com/open-dis/dis-description).
 
 ## Compiling
 
@@ -26,7 +19,7 @@ The XMLPG tool uses the Maven build system, available from Apache.org.
 
 ## Running
 
-There is a sample script `runXmlpg.sh` that uses the sample `DIS2012.xml` spec and will generate output in `target/generated-sources/`.
+There are sample scripts `runXmlpg.sh` and `runXmlpg.bat` that use the sample `DIS6.xml` and `DIS7.xml` specs and will generate output in `target/generated-sources/`.
 
 ## License
 

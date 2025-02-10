@@ -19,7 +19,7 @@ public class CppGenerator extends Generator {
      * ivars are often preceded by a special character. This sets what that character is, so that instance variable
      * names will be preceded by a "_".
      */
-    public static final String IVAR_PREFIX = "_";
+    public static final String IVAR_PREFIX = "";
 
     /**
      * Maps the primitive types listed in the XML file to the cpp types
@@ -220,13 +220,13 @@ public class CppGenerator extends Generator {
             }
 
             // "the usual" includes.
-            pw.println("#include <utils/DataStream.h>");
+            pw.println("#include \"utils/DataStream.h\"");
 
             // This is a macro file included only for microsoft compilers. set in the cpp properties tag.
             String msMacroFile = "dis6/msLibMacro";
 
             if (msMacroFile != null) {
-                pw.println("#include <" + msMacroFile + ".h>");
+                pw.println("#include \"" + msMacroFile + ".h\"");
             }
 
             pw.println();
@@ -263,15 +263,12 @@ public class CppGenerator extends Generator {
             String macroName = languageProperties.getProperty("microsoftLibMacro");
 
             if (aClass.getParentClass().equalsIgnoreCase("root")) {
-                pw.println("class EXPORT_MACRO " + aClass.getName());
+                pw.println("struct EXPORT_MACRO " + aClass.getName());
             } else {
-                pw.println("class EXPORT_MACRO " + aClass.getName() + " : public " + aClass.getParentClass());
+                pw.println("struct EXPORT_MACRO " + aClass.getName() + " : public " + aClass.getParentClass());
             }
 
             pw.println("{");
-
-            // Print out ivars. These are made protected for now.
-            pw.println("protected:");
 
             for (int idx = 0; idx < aClass.getClassAttributes().size(); idx++) {
                 ClassAttribute anAttribute = (ClassAttribute) aClass.getClassAttributes().get(idx);
@@ -325,8 +322,6 @@ public class CppGenerator extends Generator {
                 }
             }
 
-            // Delcare ctor and dtor in the public area
-            pw.println("\n public:");
             // Constructor
             pw.println("    " + aClass.getName() + "();");
 
@@ -340,59 +335,42 @@ public class CppGenerator extends Generator {
             pw.println();
 
             // Getter and setter methods for each ivar
-            for (int idx = 0; idx < aClass.getClassAttributes().size(); idx++) {
-                ClassAttribute anAttribute = (ClassAttribute) aClass.getClassAttributes().get(idx);
-
-                if (anAttribute.getAttributeKind() == ClassAttribute.ClassAttributeType.PRIMITIVE) {
-                    pw.println("    " + types.get(anAttribute.getType()) + " " + "get"
-                            + this.initialCap(anAttribute.getName()) + "() const; ");
-                    if (anAttribute.getIsDynamicListLengthField() == false) {
-                        pw.println("    void " + "set" + this.initialCap(anAttribute.getName()) + "("
-                                + types.get(anAttribute.getType()) + " pX); ");
-                    }
-                }
-
-                if (anAttribute.getAttributeKind() == ClassAttribute.ClassAttributeType.CLASSREF) {
-                    pw.println("    " + anAttribute.getType() + "& " + "get" + this.initialCap(anAttribute.getName())
-                            + "();");
-                    pw.println("    const " + anAttribute.getType() + "&  get" + this.initialCap(anAttribute.getName())
-                            + "() const;");
-                    pw.println("    void set" + this.initialCap(anAttribute.getName()) + "(const "
-                            + anAttribute.getType() + "    &pX);");
-                }
-
-                if (anAttribute.getAttributeKind() == ClassAttribute.ClassAttributeType.FIXED_LIST) {
-                    // Sleaze. We need to figure out what type of array we are, and this is slightly complex.
-                    String arrayType = this.getArrayType(anAttribute.getType());
-                    pw.println("    " + arrayType + "*  get" + this.initialCap(anAttribute.getName()) + "();");
-                    pw.println("    const " + arrayType + "*  get" + this.initialCap(anAttribute.getName())
-                            + "() const;");
-                    pw.println("    void set" + this.initialCap(anAttribute.getName()) + "( const " + arrayType
-                            + "*    pX);");
-                    if (anAttribute.getCouldBeString() == true) {
-                        pw.println("    void " + "setByString" + this.initialCap(anAttribute.getName()) + "(const "
-                                + arrayType + "* pX);");
-                    }
-
-                }
-
-                if (anAttribute.getAttributeKind() == ClassAttribute.ClassAttributeType.VARIABLE_LIST) {
-                    String attributeType = "";
-                    if (anAttribute.getUnderlyingTypeIsPrimitive()) {
-                        attributeType = types.get(anAttribute.getType()).toString();
-                    } else {
-                        attributeType = anAttribute.getType();
-                    }
-                    pw.println("    std::vector<" + attributeType + ">& " + "get"
-                            + this.initialCap(anAttribute.getName()) + "();");
-                    pw.println("    const std::vector<" + attributeType + ">& " + "get"
-                            + this.initialCap(anAttribute.getName()) + "() const;");
-                    pw.println("    void set" + this.initialCap(anAttribute.getName()) + "(const std::vector<"
-                            + attributeType + ">&    pX);");
-                }
-
-                pw.println();
-            }
+            /*
+             * for (int idx = 0; idx < aClass.getClassAttributes().size(); idx++) { ClassAttribute anAttribute =
+             * (ClassAttribute) aClass.getClassAttributes().get(idx);
+             * 
+             * if (anAttribute.getAttributeKind() == ClassAttribute.ClassAttributeType.PRIMITIVE) { pw.println("    " +
+             * types.get(anAttribute.getType()) + " " + "get" + this.initialCap(anAttribute.getName()) + "() const; ");
+             * if (anAttribute.getIsDynamicListLengthField() == false) { pw.println("    void " + "set" +
+             * this.initialCap(anAttribute.getName()) + "(" + types.get(anAttribute.getType()) + " pX); "); } }
+             * 
+             * if (anAttribute.getAttributeKind() == ClassAttribute.ClassAttributeType.CLASSREF) { pw.println("    " +
+             * anAttribute.getType() + "& " + "get" + this.initialCap(anAttribute.getName()) + "();");
+             * pw.println("    const " + anAttribute.getType() + "&  get" + this.initialCap(anAttribute.getName()) +
+             * "() const;"); pw.println("    void set" + this.initialCap(anAttribute.getName()) + "(const " +
+             * anAttribute.getType() + "    &pX);"); }
+             * 
+             * if (anAttribute.getAttributeKind() == ClassAttribute.ClassAttributeType.FIXED_LIST) { // Sleaze. We need
+             * to figure out what type of array we are, and this is slightly complex. String arrayType =
+             * this.getArrayType(anAttribute.getType()); pw.println("    " + arrayType + "*  get" +
+             * this.initialCap(anAttribute.getName()) + "();"); pw.println( "    const " + arrayType + "*  get" +
+             * this.initialCap(anAttribute.getName()) + "() const;"); pw.println("    void set" +
+             * this.initialCap(anAttribute.getName()) + "( const " + arrayType + "*    pX);"); if
+             * (anAttribute.getCouldBeString() == true) { pw.println("    void " + "setByString" +
+             * this.initialCap(anAttribute.getName()) + "(const " + arrayType + "* pX);"); }
+             * 
+             * }
+             * 
+             * if (anAttribute.getAttributeKind() == ClassAttribute.ClassAttributeType.VARIABLE_LIST) { String
+             * attributeType = ""; if (anAttribute.getUnderlyingTypeIsPrimitive()) { attributeType =
+             * types.get(anAttribute.getType()).toString(); } else { attributeType = anAttribute.getType(); }
+             * pw.println("    std::vector<" + attributeType + ">& " + "get" + this.initialCap(anAttribute.getName()) +
+             * "();"); pw.println("    const std::vector<" + attributeType + ">& " + "get" +
+             * this.initialCap(anAttribute.getName()) + "() const;"); pw.println("    void set" +
+             * this.initialCap(anAttribute.getName()) + "(const std::vector<" + attributeType + ">&    pX);"); }
+             * 
+             * pw.println(); }
+             */
 
             // Generate a getMarshalledSize() method header
             pw.println();
@@ -444,11 +422,11 @@ public class CppGenerator extends Generator {
             this.writeDtor(pw, aClass);
 
             // Write the getter and setter methods for each of the attributes
-            for (int idx = 0; idx < aClass.getClassAttributes().size(); idx++) {
-                ClassAttribute anAttribute = (ClassAttribute) aClass.getClassAttributes().get(idx);
-                this.writeGetterMethod(pw, aClass, anAttribute);
-                this.writeSetterMethod(pw, aClass, anAttribute);
-            }
+            /*
+             * for (int idx = 0; idx < aClass.getClassAttributes().size(); idx++) { ClassAttribute anAttribute =
+             * (ClassAttribute) aClass.getClassAttributes().get(idx); this.writeGetterMethod(pw, aClass, anAttribute);
+             * this.writeSetterMethod(pw, aClass, anAttribute); }
+             */
 
             // Write marshal and unmarshal methods
             this.writeMarshalMethod(pw, aClass);
@@ -813,8 +791,8 @@ public class CppGenerator extends Generator {
         List inits = aClass.getInitialValues();
         for (int idx = 0; idx < inits.size(); idx++) {
             InitialValue anInitialValue = (InitialValue) inits.get(idx);
-            String setterName = anInitialValue.getSetterMethodName();
-            pw.println("    " + setterName + "( " + anInitialValue.getVariableValue() + " );");
+            String variable = anInitialValue.getVariable();
+            pw.println("    " + variable + " = " + anInitialValue.getVariableValue() + ";");
         }
 
         for (int idx = 0; idx < aClass.getClassAttributes().size(); idx++) {
@@ -829,7 +807,7 @@ public class CppGenerator extends Generator {
                 pw.println("     for(int " + indexName + "= 0; " + indexName + " < " + arrayLength + "; " + indexName
                         + "++)");
                 pw.println("     {");
-                pw.println("         _" + attribute.getName() + "[" + indexName + "] = 0;");
+                pw.println("         " + IVAR_PREFIX + attribute.getName() + "[" + indexName + "] = 0;");
                 pw.println("     }");
                 pw.println();
             }
@@ -966,8 +944,10 @@ public class CppGenerator extends Generator {
                 pw.println("void " + aClass.getName() + "::" + "setByString" + this.initialCap(anAttribute.getName())
                         + "(const " + this.getArrayType(anAttribute.getType()) + "* x)");
                 pw.println("{");
-                pw.println("   strncpy(_" + anAttribute.getName() + ", x, " + anAttribute.getListLength() + "-1);");
-                pw.println("   _" + anAttribute.getName() + "[" + anAttribute.getListLength() + " -1] = '\\0';");
+                pw.println("   strncpy(" + IVAR_PREFIX + anAttribute.getName() + ", x, " + anAttribute.getListLength()
+                        + "-1);");
+                pw.println("   " + IVAR_PREFIX + anAttribute.getName() + "[" + anAttribute.getListLength()
+                        + " -1] = '\\0';");
                 pw.println("}");
                 pw.println();
             }
@@ -1032,7 +1012,7 @@ public class CppGenerator extends Generator {
             if (anAttribute.getAttributeKind() == ClassAttribute.ClassAttributeType.VARIABLE_LIST) {
                 // If this is a dynamic list of primitives, it's the list size times the size of the primitive.
                 if (anAttribute.getUnderlyingTypeIsPrimitive() == true) {
-                    pw.println("   marshalSize = marshalSize + _" + anAttribute.getName() + ".size() * "
+                    pw.println("   marshalSize = marshalSize + " + IVAR_PREFIX + anAttribute.getName() + ".size() * "
                             + primitiveSizes.get(anAttribute.getType()) + ";  // " + IVAR_PREFIX
                             + anAttribute.getName());
                 } else {
